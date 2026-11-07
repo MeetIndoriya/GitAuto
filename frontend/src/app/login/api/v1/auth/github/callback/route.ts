@@ -67,6 +67,21 @@ export async function GET(request: NextRequest) {
 
     const userProfile = await userRes.json();
 
+    // Check allowlist
+    const authorized = (process.env.AUTHORIZED_GITHUB_USER || "MeetIndoriya,octocat")
+      .split(",")
+      .map((u) => u.trim().toLowerCase());
+    if (authorized.length > 0 && !authorized.includes(userProfile.login.toLowerCase())) {
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=unauthorized_account&description=${encodeURIComponent(
+            `Account @${userProfile.login} is not in the authorized allowlist.`
+          )}`,
+          request.url
+        )
+      );
+    }
+
     // Session cookie payload
     const sessionPayload = {
       user_id: String(userProfile.id),

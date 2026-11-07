@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   // Otherwise, handle OAuth directly on Vercel
   const clientId = process.env.GITHUB_CLIENT_ID || "Ov23liqMpIvxYOHYvCch";
   const clientSecret = process.env.GITHUB_CLIENT_SECRET || "d92682c859a8e0596927d581fa5c111b2cc47349";
-  const redirectUri = process.env.GITHUB_REDIRECT_URI || "https://github--auto.vercel.app/api/v1/auth/github/callback";
+  const redirectUri = process.env.GITHUB_REDIRECT_URI || "https://github--auto.vercel.app/login/api/v1/auth/github/callback";
 
   try {
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
@@ -66,6 +66,21 @@ export async function GET(request: NextRequest) {
     }
 
     const userProfile = await userRes.json();
+
+    // Check allowlist
+    const authorized = (process.env.AUTHORIZED_GITHUB_USER || "MeetIndoriya,octocat")
+      .split(",")
+      .map((u) => u.trim().toLowerCase());
+    if (authorized.length > 0 && !authorized.includes(userProfile.login.toLowerCase())) {
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=unauthorized_account&description=${encodeURIComponent(
+            `Account @${userProfile.login} is not in the authorized allowlist.`
+          )}`,
+          request.url
+        )
+      );
+    }
 
     // Session cookie payload
     const sessionPayload = {
