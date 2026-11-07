@@ -125,7 +125,7 @@ async def github_callback(
         # 2. Get GitHub user profile
         profile = await github_client.get_user_profile(access_token)
 
-        # 3. Authenticate with strict allowlist
+        # 3. Authenticate with allowlist
         user = await auth_service.authenticate_github_user(
             session=db,
             gh_profile=profile,

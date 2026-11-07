@@ -2,9 +2,20 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { GitBranch, Lock, AlertCircle, ArrowRight, Loader2, Check, KeyRound, Eye, EyeOff, Info } from "lucide-react";
+import {
+  GitBranch,
+  Lock,
+  AlertCircle,
+  ArrowRight,
+  Loader2,
+  Check,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Info,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
@@ -16,7 +27,8 @@ function LoginContent() {
 
   const [token, setToken] = useState("");
   const [showToken, setShowToken] = useState(false);
-  const [isAuthorizing, setIsAuthorizing] = useState(false);
+  const [isAuthorizingToken, setIsAuthorizingToken] = useState(false);
+  const [isAuthorizingOAuth, setIsAuthorizingOAuth] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -29,7 +41,14 @@ function LoginContent() {
     }
   }, [user, isLoading, router]);
 
-  // Validation rules
+  // One-click GitHub OAuth 2.0 Handler
+  const handleGitHubOAuth = () => {
+    setIsAuthorizingOAuth(true);
+    setAuthError(null);
+    window.location.href = "/api/v1/auth/github/login?format=redirect";
+  };
+
+  // Validation rules for token
   const validateToken = (value: string): string | null => {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -56,11 +75,10 @@ function LoginContent() {
     }
   };
 
-  const handleGitHubAuthorization = async (e: React.FormEvent) => {
+  const handleGitHubTokenAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
 
-    // Apply strict client-side validation rules
     const err = validateToken(token);
     if (err) {
       setValidationError(err);
@@ -68,19 +86,16 @@ function LoginContent() {
     }
     setValidationError(null);
 
-    setIsAuthorizing(true);
+    setIsAuthorizingToken(true);
     try {
-      // Call backend to authenticate directly with GitHub API token
-      // DO NOT navigate away to github.com
       await api.loginWithGithubToken(token.trim());
       await refetchUser();
       router.replace("/dashboard");
     } catch (err: any) {
-      // Display proper in-place error message without navigating away
       const message = err.message || "Failed to authorize GitHub token. Please verify your token and scopes.";
       setAuthError(message);
     } finally {
-      setIsAuthorizing(false);
+      setIsAuthorizingToken(false);
     }
   };
 
@@ -92,7 +107,7 @@ function LoginContent() {
       {/* Fine grid overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
-      <div className="w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-300">
+      <div className="w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-300 my-8">
         <Card className="border-border bg-card/95 backdrop-blur-xl shadow-2xl">
           <CardContent className="p-8 sm:p-10 space-y-6">
             {/* Logo and Header */}
@@ -108,7 +123,7 @@ function LoginContent() {
               </p>
             </div>
 
-            {/* In-Place Server Error Alert */}
+            {/* Error Alerts */}
             {authError && (
               <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-semibold text-red-400 space-y-1.5 animate-in fade-in">
                 <div className="flex items-center gap-2 font-bold">
@@ -121,7 +136,6 @@ function LoginContent() {
               </div>
             )}
 
-            {/* URL Query Error Banner (if any) */}
             {errorParam && !authError && (
               <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-semibold text-red-400 space-y-1.5 animate-in fade-in">
                 <div className="flex items-center gap-2 font-bold">
@@ -129,12 +143,12 @@ function LoginContent() {
                   <span>Authentication Notice</span>
                 </div>
                 <p className="text-foreground-muted leading-relaxed text-xs font-medium">
-                  {descriptionParam || "An error occurred during authentication. Please retry."}
+                  {descriptionParam || `OAuth returned error: ${errorParam}. Please retry authorization.`}
                 </p>
               </div>
             )}
 
-            {/* Features summary */}
+            {/* Platform Features Summary */}
             <div className="space-y-3 py-2 text-sm font-bold text-foreground border-y border-border">
               <div className="flex items-center gap-2.5">
                 <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
@@ -156,15 +170,44 @@ function LoginContent() {
               </div>
             </div>
 
-            {/* GitHub Token Authorization Form */}
-            <form onSubmit={handleGitHubAuthorization} className="space-y-4 pt-1">
+            {/* 1. Primary Action: GitHub OAuth 2.0 */}
+            <div className="space-y-3 pt-1">
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleGitHubOAuth}
+                isLoading={isAuthorizingOAuth}
+                disabled={isAuthorizingOAuth || isAuthorizingToken}
+                className="w-full h-12 text-base font-extrabold tracking-wide justify-center shadow-lg group hover:opacity-95"
+              >
+                {!isAuthorizingOAuth && (
+                  <svg className="h-5 w-5 mr-2.5 fill-current" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                )}
+                <span>Continue with GitHub (OAuth 2.0)</span>
+                <ArrowRight className="h-5 w-5 ml-1.5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-border" />
+              <span className="flex-shrink mx-4 text-xs font-mono font-bold uppercase tracking-wider text-foreground-muted">
+                or sign in with token
+              </span>
+              <div className="flex-grow border-t border-border" />
+            </div>
+
+            {/* 2. Secondary Action: Personal Access Token Form */}
+            <form onSubmit={handleGitHubTokenAuth} className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="github-token" className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <KeyRound className="h-4 w-4 text-primary" />
-                    <span>GitHub Personal Access Token</span>
+                  <label htmlFor="github-token" className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <KeyRound className="h-3.5 w-3.5 text-primary" />
+                    <span>Personal Access Token</span>
                   </label>
-                  <span className="text-xs font-mono font-bold text-primary">Required</span>
+                  <span className="text-[11px] font-mono font-bold text-foreground-muted">Direct Auth</span>
                 </div>
 
                 <div className="relative">
@@ -176,8 +219,8 @@ function LoginContent() {
                     placeholder="ghp_xxxxxxxxxxxxxxxxxxxx or github_pat_..."
                     autoComplete="off"
                     spellCheck={false}
-                    disabled={isAuthorizing}
-                    className={`w-full h-11 px-3.5 pr-11 rounded-lg border font-mono text-sm bg-background text-foreground transition-all outline-none focus:ring-2 focus:ring-primary/40 ${
+                    disabled={isAuthorizingToken || isAuthorizingOAuth}
+                    className={`w-full h-10 px-3.5 pr-11 rounded-lg border font-mono text-xs bg-background text-foreground transition-all outline-none focus:ring-2 focus:ring-primary/40 ${
                       validationError ? "border-red-500 ring-1 ring-red-500" : "border-border hover:border-border-focus"
                     }`}
                   />
@@ -200,41 +243,23 @@ function LoginContent() {
                 )}
               </div>
 
-              {/* Token Scope Guide / Helper */}
-              <div className="p-3 rounded-xl border border-border bg-muted/30 text-xs font-medium text-foreground-muted space-y-1.5">
-                <div className="flex items-center gap-1.5 text-foreground font-bold">
-                  <Info className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                  <span>Token Scope Requirements</span>
-                </div>
-                <p className="leading-relaxed">
-                  Generate a classic token with <strong className="text-foreground font-mono">repo</strong> scope, or a fine-grained token with repository administration permissions at GitHub Settings &gt; Developer settings.
-                </p>
-              </div>
-
-              {/* Authorize Button - In-place without redirecting to GitHub */}
               <Button
                 type="submit"
-                variant="primary"
-                size="lg"
-                isLoading={isAuthorizing}
-                disabled={isAuthorizing}
-                className="w-full h-12 text-base font-extrabold tracking-wide justify-center shadow-lg group hover:opacity-95"
+                variant="secondary"
+                size="sm"
+                isLoading={isAuthorizingToken}
+                disabled={isAuthorizingToken || isAuthorizingOAuth || !token.trim()}
+                className="w-full h-10 text-xs font-bold tracking-wide justify-center shadow-xs border border-border"
               >
-                {!isAuthorizing && (
-                  <svg className="h-5 w-5 mr-2.5 fill-current" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-                  </svg>
-                )}
-                <span>Authorize & Sign In</span>
-                <ArrowRight className="h-5 w-5 ml-1.5 transition-transform group-hover:translate-x-1" />
+                <span>Authorize with Token</span>
               </Button>
             </form>
 
             {/* Security Notice */}
-            <div className="text-center pt-2">
+            <div className="text-center pt-1 border-t border-border/60">
               <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-foreground-muted">
-                <Lock className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Encrypted AES-256-GCM Session Storage</span>
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Protected by PKCE S256 & AES-256 Session Vault</span>
               </div>
             </div>
           </CardContent>

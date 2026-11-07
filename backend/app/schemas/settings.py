@@ -20,7 +20,7 @@ class AutomationPreferences(BaseModel):
 class AppSettingsResponse(BaseModel):
     repository_defaults: RepositoryDefaults
     automation_preferences: AutomationPreferences
-    authorized_user: str
+    authorized_user: Optional[str] = ""
     environment: str
 
 

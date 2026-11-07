@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAME_SITE: str = "lax"
 
-    # Optional GitHub OAuth configuration (dynamic token auth used by default)
-    GITHUB_CLIENT_ID: Optional[str] = None
-    GITHUB_CLIENT_SECRET: Optional[str] = None
-    GITHUB_REDIRECT_URI: Optional[str] = None
+    # GitHub OAuth 2.0 Configuration
+    GITHUB_CLIENT_ID: Optional[str] = "Ov23liqMpIvxYOHYvCch"
+    GITHUB_CLIENT_SECRET: Optional[str] = "d92682c859a8e0596927d581fa5c111b2cc47349"
+    GITHUB_REDIRECT_URI: Optional[str] = "http://localhost:8000/api/v1/auth/github/callback"
     AUTHORIZED_GITHUB_USER: Optional[str] = "octocat"
 
     # Database
