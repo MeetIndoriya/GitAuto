@@ -34,7 +34,8 @@ class AuthService:
 
         # STRICT ALLOWLIST VALIDATION (Only if explicitly enabled and configured)
         if enforce_allowlist and settings.AUTHORIZED_GITHUB_USER:
-            if gh_username.lower() != settings.AUTHORIZED_GITHUB_USER.lower():
+            allowed_users = [u.strip().lower() for u in settings.AUTHORIZED_GITHUB_USER.split(",") if u.strip()]
+            if "*" not in allowed_users and gh_username.lower() not in allowed_users:
                 raise ForbiddenAccountException(gh_username)
 
         # Upsert User

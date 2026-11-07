@@ -32,8 +32,9 @@ async def test_github_callback_success_authorized_user(client: httpx.AsyncClient
         return_value=httpx.Response(200, json={"access_token": "ghp_mock_token_123", "scope": "repo,read:user,user:email"})
     )
     # Mock user profile
+    test_login = (settings.AUTHORIZED_GITHUB_USER or "octocat").split(",")[0]
     respx.get("https://api.github.com/user").mock(
-        return_value=httpx.Response(200, json={"id": 99999, "login": settings.AUTHORIZED_GITHUB_USER, "avatar_url": "https://avatar.png", "email": "octocat@github.com"})
+        return_value=httpx.Response(200, json={"id": 99999, "login": test_login, "avatar_url": "https://avatar.png", "email": "octocat@github.com"})
     )
 
     state = "test_state_123"

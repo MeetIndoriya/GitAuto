@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: Optional[str] = "Ov23liqMpIvxYOHYvCch"
     GITHUB_CLIENT_SECRET: Optional[str] = "d92682c859a8e0596927d581fa5c111b2cc47349"
     GITHUB_REDIRECT_URI: Optional[str] = "https://github--auto.vercel.app/login/api/v1/auth/github/callback"
-    AUTHORIZED_GITHUB_USER: Optional[str] = "octocat"
+    AUTHORIZED_GITHUB_USER: Optional[str] = "MeetIndoriya,octocat"
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./gitauto.db"
