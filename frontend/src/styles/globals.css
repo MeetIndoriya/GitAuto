@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --background-subtle: 240 5% 97%;
+    --foreground: 240 10% 3%;
+    --foreground-muted: 240 6% 30%;
+    --foreground-subtle: 240 5% 45%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3%;
+    --card-hover: 240 5% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3%;
+    --primary: 240 10% 4%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 94%;
+    --secondary-foreground: 240 10% 4%;
+    --muted: 240 5% 94%;
+    --muted-foreground: 240 6% 30%;
+    --accent: 240 5% 92%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --destructive-bg: 0 86% 97%;
+    --destructive-border: 0 93% 82%;
+    --success-bg: 152 76% 96%;
+    --success-border: 156 72% 82%;
+    --warning-bg: 48 96% 95%;
+    --warning-border: 45 93% 77%;
+    --info-bg: 204 94% 97%;
+    --info-border: 199 89% 82%;
+    --border: 240 6% 86%;
+    --border-subtle: 240 5% 92%;
+    --border-focus: 240 5% 45%;
+    --input: 240 6% 88%;
+    --ring: 240 10% 4%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.5%;
+    --background-subtle: 240 10% 5.5%;
+    --foreground: 0 0% 100%;
+    --foreground-muted: 240 5% 80%;
+    --foreground-subtle: 240 4% 65%;
+    --card: 240 10% 6.5%;
+    --card-foreground: 0 0% 100%;
+    --card-hover: 240 8% 9.5%;
+    --popover: 240 10% 6.5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 6% 14%;
+    --muted-foreground: 240 5% 78%;
+    --accent: 240 6% 18%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-bg: 356 50% 11%;
+    --destructive-border: 0 63% 31%;
+    --success-bg: 164 74% 9%;
+    --success-border: 160 84% 24%;
+    --warning-bg: 38 65% 9%;
+    --warning-border: 35 92% 33%;
+    --info-bg: 202 71% 11%;
+    --info-border: 201 96% 32%;
+    --border: 240 6% 18%;
+    --border-subtle: 240 6% 13%;
+    --border-focus: 240 5% 55%;
+    --input: 240 6% 18%;
+    --ring: 240 5% 90%;
+  }
+}
+
+@layer base {
+  html {
+    font-size: 16.5px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-zinc-800 selection:text-zinc-100;
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: hsl(var(--foreground));
+  }
+}
+
+/* Custom scrollbars matching zinc aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
