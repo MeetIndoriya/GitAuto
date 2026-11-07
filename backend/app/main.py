@@ -110,6 +110,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # Mount Routers
 app.include_router(health_router)
 app.include_router(api_v1_router)
+app.include_router(api_v1_router, prefix="/login")
 
 
 if __name__ == "__main__":

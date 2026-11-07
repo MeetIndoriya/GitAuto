@@ -39,10 +39,14 @@ async def github_login(
     format: str = Query(default="redirect", description="Response format: 'redirect' or 'json'"),
 ):
     code_verifier, code_challenge = generate_pkce_pair()
-    state = generate_oauth_state()
+    raw_state = generate_oauth_state()
+
+    host = request.headers.get("host", "")
+    is_local = "localhost" in host or "127.0.0.1" in host
+    state = f"local_{raw_state}" if is_local else raw_state
 
     # Package state and verifier in encrypted cookie
-    pkce_payload = json.dumps({"state": state, "code_verifier": code_verifier})
+    pkce_payload = json.dumps({"state": raw_state, "code_verifier": code_verifier})
     encrypted_pkce = encrypt_token(pkce_payload)
 
     params = {
@@ -100,14 +104,15 @@ async def github_callback(
         redirect_url = f"{settings.FRONTEND_URL}/login?error=invalid_callback_params"
         return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
+    check_state = state.replace("local_", "") if state else ""
     code_verifier = ""
     if gitauto_pkce:
         try:
             decrypted = decrypt_token(gitauto_pkce)
             pkce_data = json.loads(decrypted)
             saved_state = pkce_data.get("state")
-            if saved_state != state:
-                logger.warning(f"OAuth state mismatch: expected {saved_state}, got {state}")
+            if saved_state != check_state:
+                logger.warning(f"OAuth state mismatch: expected {saved_state}, got {check_state}")
                 redirect_url = f"{settings.FRONTEND_URL}/login?error=state_mismatch"
                 return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
             code_verifier = pkce_data.get("code_verifier", "")
