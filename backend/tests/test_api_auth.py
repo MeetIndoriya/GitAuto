@@ -50,7 +50,8 @@ async def test_github_callback_success_authorized_user(client: httpx.AsyncClient
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_github_callback_rejects_unauthorized_user(client: httpx.AsyncClient):
+async def test_github_callback_rejects_unauthorized_user(client: httpx.AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "AUTHORIZED_GITHUB_USER", "allowed_user")
     # Mock token exchange
     respx.post("https://github.com/login/oauth/access_token").mock(
         return_value=httpx.Response(200, json={"access_token": "ghp_mock_token_123", "scope": "repo,read:user"})

@@ -14,6 +14,9 @@ class CreateWorkflowRequest(BaseModel):
     gitignore_template: Optional[str] = Field(default="Node", description="Language template for .gitignore (Node, Python, Go, Rust, None)")
     license_template: Optional[str] = Field(default=None, description="Optional license template")
     is_dry_run: bool = Field(default=False, description="Preview mode without making remote changes")
+    auto_delete: bool = Field(default=False, description="Automatically delete repository after pushing commits to clean up while recording contributions")
+    commits_count: int = Field(default=1, ge=1, le=5, description="Number of contribution commits to push (1 or 2)")
+    repo_prefix: Optional[str] = Field(default=None, description="Prefix for generated repository name")
 
     @field_validator("repository_name")
     @classmethod

@@ -19,6 +19,8 @@ import {
   ShieldCheck,
   Infinity as InfinityIcon,
   Activity,
+  Zap,
+  Trash2,
 } from "lucide-react";
 import { ShellLayout } from "@/components/layout/ShellLayout";
 import { Button } from "@/components/ui/Button";
@@ -47,6 +49,12 @@ export default function NewAutomationPage() {
   const [initReadme, setInitReadme] = useState(true);
   const [gitignoreTemplate, setGitignoreTemplate] = useState("Node");
   const [customReadme, setCustomReadme] = useState("");
+
+  // Commercial Contribution Booster Mode state
+  const [activeTab, setActiveTab] = useState<"contribution" | "continuous">("contribution");
+  const [contribPrefix, setContribPrefix] = useState("gitauto-");
+  const [commitsCount, setCommitsCount] = useState<1 | 2>(2);
+  const [autoDelete, setAutoDelete] = useState(true);
 
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<WorkflowRunResponse | null>(null);
@@ -104,6 +112,46 @@ cd ${repoName || "project-name"}
 \`\`\`
 `;
 
+  const handleContributionExecute = async () => {
+    try {
+      setIsExecuting(true);
+      const cleanPrefix = contribPrefix.trim() ? contribPrefix.trim().replace(/[^a-zA-Z0-9_\-\.]/g, "") : "gitauto-";
+      const generatedName = `${cleanPrefix.replace(/-+$/, "")}-${Date.now().toString().slice(-6)}`;
+
+      const payload: CreateWorkflowRequest = {
+        repository_name: generatedName,
+        description: "Automated contribution verification repository by GitAuto.",
+        visibility: "public",
+        default_branch: "main",
+        init_readme: true,
+        gitignore_template: "None",
+        is_dry_run: false,
+        auto_delete: autoDelete,
+        commits_count: commitsCount,
+        repo_prefix: cleanPrefix,
+      };
+
+      const result = await api.createAutomation(payload);
+      setExecutionResult(result);
+      setModalOpen(true);
+
+      if (result.status === "SUCCESS") {
+        toast.success(
+          "Contributions Boosted Successfully!",
+          `Pushed ${commitsCount} contribution commit(s) to '${generatedName}'${autoDelete ? " and safely deleted the repository." : "."}`
+        );
+      } else if (result.status === "RUNNING_FOREVER") {
+        toast.success("Automation Deployed", `Repository '${generatedName}' is active and running.`);
+      } else {
+        toast.error("Execution notice", result.error_message || "Operation completed with notices.");
+      }
+    } catch (err: any) {
+      toast.error("Failed to execute contribution boost", err.message || "An unexpected error occurred");
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
   const handleExecute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValidName(repoName)) {
@@ -155,14 +203,207 @@ cd ${repoName || "project-name"}
         <div className="space-y-1">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
             <Sparkles className="h-7 w-7 text-primary" />
-            <span>New Repository Automation</span>
+            <span>Repository Automation Engine</span>
           </h1>
           <p className="text-sm font-semibold text-foreground-muted">
-            Configure repository properties, scaffold starter files, and deploy a daemon that runs forever.
+            Automate repository creation, push contribution commits to your GitHub profile, and manage lifecycle.
           </p>
         </div>
 
-        <form onSubmit={handleExecute} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Mode Selector Tabs */}
+        <div className="flex p-1.5 rounded-2xl bg-card border border-border shadow-sm max-w-xl">
+          <button
+            type="button"
+            onClick={() => setActiveTab("contribution")}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeTab === "contribution"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground-muted hover:text-foreground"
+            }`}
+          >
+            <Zap className="h-4 w-4" />
+            <span>1-Click Contribution Boost</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("continuous")}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeTab === "continuous"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground-muted hover:text-foreground"
+            }`}
+          >
+            <InfinityIcon className="h-4 w-4" />
+            <span>Continuous Repo Automation</span>
+          </button>
+        </div>
+
+        {activeTab === "contribution" ? (
+          /* ========================================================================= */
+          /* 1-CLICK CONTRIBUTION BOOST MODE (COMMERCIAL FEATURE)                      */
+          /* ========================================================================= */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-7 space-y-6">
+              <Card className="border-primary/20 bg-card/95 shadow-lg">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-amber-400 fill-amber-400" />
+                    <span>Auto Contribution Configuration</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs font-medium">
+                    Initializes a repo with a prefix, pushes 1–2 commits to record contributions, and cleans up.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {/* Prefix Setting */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-bold text-foreground">
+                        Repository Prefix <span className="text-red-400">*</span>
+                      </label>
+                      <span className="text-xs font-mono font-medium text-foreground-muted">
+                        e.g. {contribPrefix}123456
+                      </span>
+                    </div>
+                    <Input
+                      value={contribPrefix}
+                      onChange={(e) => setContribPrefix(e.target.value)}
+                      placeholder="e.g. gitauto- or contrib-"
+                      className="font-mono text-sm h-10 font-bold"
+                    />
+                    <p className="text-xs font-medium text-foreground-muted">
+                      Unique timestamp will be appended automatically to prevent collisions.
+                    </p>
+                  </div>
+
+                  {/* Number of Contributions */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground">Number of Contributions</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setCommitsCount(1)}
+                        className={`p-3.5 rounded-xl border text-left transition-all ${
+                          commitsCount === 1
+                            ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+                            : "border-border bg-card/50 text-foreground-muted hover:border-border-focus"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-foreground">1 Contribution</span>
+                          <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted">1 commit</span>
+                        </div>
+                        <p className="text-xs font-medium text-foreground-muted mt-1">Initial project README.md</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCommitsCount(2)}
+                        className={`p-3.5 rounded-xl border text-left transition-all ${
+                          commitsCount === 2
+                            ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+                            : "border-border bg-card/50 text-foreground-muted hover:border-border-focus"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-foreground">2 Contributions</span>
+                          <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Recommended</span>
+                        </div>
+                        <p className="text-xs font-medium text-foreground-muted mt-1">README + Activity verification</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Auto-Delete Toggle */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
+                    <div className="space-y-0.5 pr-4">
+                      <div className="flex items-center gap-2">
+                        <Trash2 className="h-4 w-4 text-emerald-400" />
+                        <span className="text-sm font-bold text-foreground">Auto-Delete After Commits</span>
+                      </div>
+                      <p className="text-xs font-medium text-foreground-muted">
+                        Automatically deletes the temporary repo so your GitHub account stays tidy while your contributions are recorded.
+                      </p>
+                    </div>
+                    <Switch checked={autoDelete} onCheckedChange={setAutoDelete} />
+                  </div>
+
+                  {/* Primary Trigger Button */}
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="lg"
+                      onClick={handleContributionExecute}
+                      isLoading={isExecuting}
+                      disabled={isExecuting}
+                      className="w-full h-12 text-base font-extrabold tracking-wide justify-center shadow-lg gap-2"
+                    >
+                      <Zap className="h-4 w-4 fill-current" />
+                      <span>Boost {commitsCount} Contribution{commitsCount > 1 ? "s" : ""} Now</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sequence Plan for Contribution Boost */}
+            <div className="lg:col-span-5 space-y-6">
+              <Card className="sticky top-20 border-border bg-card/95">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-sky-400" />
+                    <span>Contribution Pipeline</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs font-medium">
+                    What the engine will execute automatically
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2.5 text-xs font-mono font-semibold">
+                    <div className="flex items-center gap-2 text-foreground">
+                      <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                      <span>Validate GitHub authorization for @{user?.github_username || "user"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                      <span>Create public repo: <strong className="text-foreground">{contribPrefix}XXXXXX</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                      <span>Push README.md commit <strong className="text-emerald-400">(Contribution #1)</strong></span>
+                    </div>
+                    {commitsCount >= 2 && (
+                      <div className="flex items-center gap-2 text-foreground">
+                        <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">4</span>
+                        <span>Push CONTRIBUTING.md commit <strong className="text-emerald-400">(Contribution #2)</strong></span>
+                      </div>
+                    )}
+                    {autoDelete ? (
+                      <div className="flex items-center gap-2 text-foreground">
+                        <span className="h-5 w-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-[10px] font-bold">
+                          {commitsCount >= 2 ? "5" : "4"}
+                        </span>
+                        <span>Safely delete temporary repo on GitHub</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-foreground">
+                        <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">
+                          {commitsCount >= 2 ? "5" : "4"}
+                        </span>
+                        <span>Keep repository active on GitHub</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        ) : (
+          /* ========================================================================= */
+          /* CONTINUOUS REPO AUTOMATION MODE (CUSTOM REPOSITORY)                       */
+          /* ========================================================================= */
+          <form onSubmit={handleExecute} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Form Column (7 Cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* 1. Repository Details Card */}
@@ -413,6 +654,7 @@ cd ${repoName || "project-name"}
             </Card>
           </div>
         </form>
+        )}
 
         {/* Live Execution Modal */}
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>

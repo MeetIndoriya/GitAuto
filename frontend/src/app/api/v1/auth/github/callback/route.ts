@@ -67,19 +67,21 @@ export async function GET(request: NextRequest) {
 
     const userProfile = await userRes.json();
 
-    // Check allowlist
-    const authorized = (process.env.AUTHORIZED_GITHUB_USER || "MeetIndoriya,octocat")
-      .split(",")
-      .map((u) => u.trim().toLowerCase());
-    if (authorized.length > 0 && !authorized.includes(userProfile.login.toLowerCase())) {
-      return NextResponse.redirect(
-        new URL(
-          `/login?error=unauthorized_account&description=${encodeURIComponent(
-            `Account @${userProfile.login} is not in the authorized allowlist.`
-          )}`,
-          request.url
-        )
-      );
+    // Commercial Multi-Tenant Mode: Every GitHub user is permitted
+    // Optional allowlist only active if explicitly set to something other than "*" and not empty
+    const allowlistEnv = process.env.AUTHORIZED_GITHUB_USER;
+    if (allowlistEnv && allowlistEnv.trim() !== "" && allowlistEnv.trim() !== "*") {
+      const authorized = allowlistEnv.split(",").map((u) => u.trim().toLowerCase());
+      if (authorized.length > 0 && !authorized.includes(userProfile.login.toLowerCase())) {
+        return NextResponse.redirect(
+          new URL(
+            `/login?error=unauthorized_account&description=${encodeURIComponent(
+              `Account @${userProfile.login} is not authorized on this private instance.`
+            )}`,
+            request.url
+          )
+        );
+      }
     }
 
     // Session cookie payload

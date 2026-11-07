@@ -102,6 +102,9 @@ export interface CreateWorkflowRequest {
   gitignore_template?: string;
   license_template?: string;
   is_dry_run: boolean;
+  auto_delete?: boolean;
+  commits_count?: number;
+  repo_prefix?: string;
 }
 
 export interface ManagedRepositoryResponse {

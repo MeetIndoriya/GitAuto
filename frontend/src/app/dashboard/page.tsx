@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   Palette,
   History,
+  Zap,
 } from "lucide-react";
+import { useToast } from "@/components/ui/ToastProvider";
 import { ShellLayout } from "@/components/layout/ShellLayout";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -31,9 +33,43 @@ import { animateCardStagger } from "@/lib/animations";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [boosting, setBoosting] = useState(false);
   const cardsRef = useRef<HTMLDivElement>(null);
+
+  const handleQuickContributionBoost = async () => {
+    try {
+      setBoosting(true);
+      const generatedName = `gitauto-${Date.now().toString().slice(-6)}`;
+      const result = await api.createAutomation({
+        repository_name: generatedName,
+        description: "Automated contribution verification repository by GitAuto.",
+        visibility: "public",
+        default_branch: "main",
+        init_readme: true,
+        gitignore_template: "None",
+        is_dry_run: false,
+        auto_delete: true,
+        commits_count: 2,
+        repo_prefix: "gitauto-",
+      });
+      if (result.status === "SUCCESS") {
+        toast.success(
+          "2 Contributions Boosted!",
+          `Created repository '${generatedName}', pushed 2 contribution commits, and safely cleaned up.`
+        );
+      } else {
+        toast.error("Notice", result.error_message || "Operation completed.");
+      }
+      await loadData();
+    } catch (err: any) {
+      toast.error("Boost failed", err.message || "Failed to trigger contribution boost");
+    } finally {
+      setBoosting(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -96,6 +132,35 @@ export default function DashboardPage() {
                 <span>New Automation</span>
               </Button>
             </NextLink>
+          </div>
+        </div>
+
+        {/* Commercial Feature: Instant Contribution Boost Banner */}
+        <div className="p-5 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-emerald-500/10 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-400 fill-amber-400" />
+              <h3 className="text-base font-bold text-foreground">Instant Contribution Booster</h3>
+              <span className="text-[10px] font-mono uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
+                Auto-Delete & Cleanup
+              </span>
+            </div>
+            <p className="text-xs font-medium text-foreground-muted">
+              Creates a temporary prefixed repo, pushes 2 contribution commits to your profile activity, and cleanly auto-deletes the repo.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleQuickContributionBoost}
+              isLoading={boosting}
+              disabled={boosting}
+              className="font-bold shadow-md gap-2 h-10 px-4"
+            >
+              <Zap className="h-4 w-4 fill-current" />
+              <span>Boost 2 Contributions Now</span>
+            </Button>
           </div>
         </div>
 
