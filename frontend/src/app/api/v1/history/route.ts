@@ -34,10 +34,14 @@ export async function GET(request: NextRequest) {
     success: true,
     data: {
       items,
-      total: items.length,
-      page: 1,
-      page_size: 50,
-      total_pages: 1,
+      pagination: {
+        page: 1,
+        page_size: 50,
+        total_items: items.length,
+        total_pages: Math.max(1, Math.ceil(items.length / 50)),
+        has_next: false,
+        has_prev: false,
+      },
     },
     timestamp: new Date().toISOString(),
   });

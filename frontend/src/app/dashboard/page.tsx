@@ -43,9 +43,10 @@ export default function DashboardPage() {
     try {
       setBoosting(true);
       const generatedName = `gitauto-${Date.now().toString().slice(-6)}`;
+      const today = new Date().toISOString().split("T")[0];
       const result = await api.createAutomation({
         repository_name: generatedName,
-        description: "Automated contribution verification repository by GitAuto.",
+        description: `Automated contribution boost for ${today} by GitAuto.`,
         visibility: "public",
         default_branch: "main",
         init_readme: true,
@@ -53,6 +54,9 @@ export default function DashboardPage() {
         is_dry_run: false,
         auto_delete: true,
         commits_count: 2,
+        commits_per_day: 2,
+        start_date: today,
+        end_date: today,
         repo_prefix: "gitauto-",
       });
       if (result.status === "SUCCESS") {
@@ -161,6 +165,15 @@ export default function DashboardPage() {
               <Zap className="h-4 w-4 fill-current" />
               <span>Boost 2 Contributions Now</span>
             </Button>
+            <NextLink href="/automations/new">
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-bold border-primary/30 text-foreground hover:bg-primary/10 gap-2 h-10 px-4"
+              >
+                <span>📅 Schedule Date Range</span>
+              </Button>
+            </NextLink>
           </div>
         </div>
 

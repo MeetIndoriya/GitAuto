@@ -143,88 +143,105 @@ export async function POST(request: NextRequest) {
       payload_snapshot: { managed_repo_id: `repo_${repoData.id}`, github_repo_id: repoData.id },
     });
 
-    // Step 4: Publish Initial Contribution Commit (Commit 1)
+    // Step 4: Publish Contribution Commits (supports scheduled date range)
     const s4Start = Date.now();
-    const readmeContent = Buffer.from(
-      body.readme_template ||
-        `# ${repoName}\n\n${body.description || "Automated repository provisioned by GitAuto."}\n\n- Provisioned: ${new Date().toISOString()}\n- Engine: GitAuto Automation\n`
-    ).toString("base64");
+    const startDateStr = body.start_date;
+    const endDateStr = body.end_date;
+    const commitsPerDay = Math.min(Math.max(Number(body.commits_per_day) || Number(body.commits_count) || 1, 1), 5);
 
-    const commit1Res = await fetch(
-      `https://api.github.com/repos/${owner}/${repoName}/contents/README.md`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "User-Agent": "GitAuto-Engine/1.0",
-          Accept: "application/vnd.github.v3+json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: "chore: initialize project with README.md [GitAuto Contribution #1]",
-          content: readmeContent,
-          branch: defaultBranch,
-        }),
+    let scheduledDates: string[] = [];
+    if (startDateStr && endDateStr) {
+      const s = new Date(startDateStr);
+      const e = new Date(endDateStr);
+      const curr = new Date(s);
+      while (curr <= e && scheduledDates.length < 60) {
+        scheduledDates.push(curr.toISOString().split("T")[0]);
+        curr.setDate(curr.getDate() + 1);
       }
-    );
+    }
+    if (scheduledDates.length === 0) {
+      scheduledDates.push(new Date().toISOString().split("T")[0]);
+    }
 
-    const commit1Data = commit1Res.ok ? await commit1Res.json() : null;
+    let totalCommitsPushed = 0;
+    for (let i = 0; i < scheduledDates.length; i++) {
+      const targetDate = scheduledDates[i];
+      const isSingleDay = scheduledDates.length === 1;
+      const path1 = isSingleDay ? "README.md" : `activity-${targetDate}.md`;
+      const content1 = Buffer.from(
+        body.readme_template ||
+          `# Activity Log - ${targetDate}\n\nAutomated contribution verified by GitAuto on ${targetDate}.\n\n- Repository: ${repoName}\n- Timestamp: ${new Date().toISOString()}\n`
+      ).toString("base64");
+
+      try {
+        const commit1Res = await fetch(
+          `https://api.github.com/repos/${owner}/${repoName}/contents/${path1}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "User-Agent": "GitAuto-Engine/1.0",
+              Accept: "application/vnd.github.v3+json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: `chore: contribution commit for ${targetDate} [GitAuto #${totalCommitsPushed + 1}]`,
+              content: content1,
+              branch: defaultBranch,
+            }),
+          }
+        );
+        if (commit1Res.ok) totalCommitsPushed++;
+
+        if (commitsPerDay >= 2) {
+          const path2 = isSingleDay ? "CONTRIBUTING.md" : `verification-${targetDate}.md`;
+          const content2 = Buffer.from(
+            `# Verification Record - ${targetDate}\n\nScheduled activity proof verified by GitAuto for ${owner}.\n`
+          ).toString("base64");
+          const commit2Res = await fetch(
+            `https://api.github.com/repos/${owner}/${repoName}/contents/${path2}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "User-Agent": "GitAuto-Engine/1.0",
+                Accept: "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                message: `docs: verify activity log for ${targetDate} [GitAuto #${totalCommitsPushed + 1}]`,
+                content: content2,
+                branch: defaultBranch,
+              }),
+            }
+          );
+          if (commit2Res.ok) totalCommitsPushed++;
+        }
+      } catch (commitErr) {
+        console.error("Commit generation error:", commitErr);
+      }
+    }
+
     steps.push({
       id: `s4_${Date.now()}`,
       step_number: 4,
-      step_name: "Publish Initial Contribution Commit [Contribution #1]",
-      status: commit1Res.ok ? "SUCCESS" : "FAILED",
+      step_name: `Publish Contribution Commits (${totalCommitsPushed} commits across ${scheduledDates.length} day(s))`,
+      status: totalCommitsPushed > 0 ? "SUCCESS" : "FAILED",
       http_method: "PUT",
-      api_endpoint: `https://api.github.com/repos/${owner}/${repoName}/contents/README.md`,
-      http_status_code: commit1Res.status,
+      api_endpoint: `https://api.github.com/repos/${owner}/${repoName}/contents/`,
+      http_status_code: 201,
       duration_ms: Date.now() - s4Start,
       started_at: new Date(s4Start).toISOString(),
       completed_at: new Date().toISOString(),
-      payload_snapshot: { commit_sha: commit1Data?.commit?.sha || null },
+      payload_snapshot: {
+        scheduled_start: scheduledDates[0],
+        scheduled_end: scheduledDates[scheduledDates.length - 1],
+        total_days: scheduledDates.length,
+        total_commits_pushed: totalCommitsPushed,
+      },
     });
 
-    // Step 5: Publish Secondary Contribution Commit (Commit 2) if requested
-    if (commitsCount >= 2 && commit1Res.ok) {
-      const s5Start = Date.now();
-      const activityContent = Buffer.from(
-        `# Activity & Verification Log\n\nVerified contribution recorded by GitAuto on ${new Date().toISOString()}.\n`
-      ).toString("base64");
-
-      const commit2Res = await fetch(
-        `https://api.github.com/repos/${owner}/${repoName}/contents/CONTRIBUTING.md`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "User-Agent": "GitAuto-Engine/1.0",
-            Accept: "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: "docs: add contribution activity guidelines [GitAuto Contribution #2]",
-            content: activityContent,
-            branch: defaultBranch,
-          }),
-        }
-      );
-
-      const commit2Data = commit2Res.ok ? await commit2Res.json() : null;
-      steps.push({
-        id: `s5_${Date.now()}`,
-        step_number: 5,
-        step_name: "Publish Secondary Contribution Commit [Contribution #2]",
-        status: commit2Res.ok ? "SUCCESS" : "FAILED",
-        http_method: "PUT",
-        api_endpoint: `https://api.github.com/repos/${owner}/${repoName}/contents/CONTRIBUTING.md`,
-        http_status_code: commit2Res.status,
-        duration_ms: Date.now() - s5Start,
-        started_at: new Date(s5Start).toISOString(),
-        completed_at: new Date().toISOString(),
-        payload_snapshot: { commit_sha: commit2Data?.commit?.sha || null },
-      });
-    }
-
-    // Step 6: Auto-delete if selected (Cleans up disposable repo while keeping contributions recorded)
+    // Step 5: Auto-delete if selected (Cleans up disposable repo while keeping contributions recorded)
     let workflowStatus = "SUCCESS";
     if (autoDelete) {
       const sDelStart = Date.now();

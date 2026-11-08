@@ -21,6 +21,7 @@ import {
   Activity,
   Zap,
   Trash2,
+  Calendar,
 } from "lucide-react";
 import { ShellLayout } from "@/components/layout/ShellLayout";
 import { Button } from "@/components/ui/Button";
@@ -55,6 +56,24 @@ export default function NewAutomationPage() {
   const [contribPrefix, setContribPrefix] = useState("gitauto-");
   const [commitsCount, setCommitsCount] = useState<1 | 2>(2);
   const [autoDelete, setAutoDelete] = useState(true);
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
+
+  const calculateDays = () => {
+    try {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return 1;
+      const diffTime = e.getTime() - s.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays > 0 ? Math.min(diffDays, 60) : 1;
+    } catch {
+      return 1;
+    }
+  };
+  const totalDays = calculateDays();
+  const totalContributions = totalDays * commitsCount;
 
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<WorkflowRunResponse | null>(null);
@@ -120,14 +139,17 @@ cd ${repoName || "project-name"}
 
       const payload: CreateWorkflowRequest = {
         repository_name: generatedName,
-        description: "Automated contribution verification repository by GitAuto.",
+        description: `Automated contribution boost (${startDate} to ${endDate}) by GitAuto.`,
         visibility: "public",
         default_branch: "main",
         init_readme: true,
         gitignore_template: "None",
         is_dry_run: false,
         auto_delete: autoDelete,
-        commits_count: commitsCount,
+        commits_count: totalContributions,
+        commits_per_day: commitsCount,
+        start_date: startDate,
+        end_date: endDate,
         repo_prefix: cleanPrefix,
       };
 
@@ -138,7 +160,7 @@ cd ${repoName || "project-name"}
       if (result.status === "SUCCESS") {
         toast.success(
           "Contributions Boosted Successfully!",
-          `Pushed ${commitsCount} contribution commit(s) to '${generatedName}'${autoDelete ? " and safely deleted the repository." : "."}`
+          `Generated ${totalContributions} contribution commit(s) across ${totalDays} day(s) (${startDate} to ${endDate})${autoDelete ? " and safely deleted the repository." : "."}`
         );
       } else if (result.status === "RUNNING_FOREVER") {
         toast.success("Automation Deployed", `Repository '${generatedName}' is active and running.`);
@@ -276,9 +298,47 @@ cd ${repoName || "project-name"}
                     </p>
                   </div>
 
+                  {/* Schedule Date Range (User adds manually) */}
+                  <div className="space-y-2 p-4 rounded-xl border border-border bg-card/40">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <label className="text-sm font-bold text-foreground">Schedule Date Range</label>
+                      </div>
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-primary/10 text-primary">
+                        {totalDays} Day{totalDays > 1 ? "s" : ""} ({totalContributions} Commits)
+                      </span>
+                    </div>
+                    <p className="text-xs font-medium text-foreground-muted">
+                      Set starting and ending dates to distribute contribution commits across your GitHub calendar.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground-muted">Starting Date</label>
+                        <Input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="h-10 text-xs font-mono font-bold"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground-muted">Ending Date</label>
+                        <Input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="h-10 text-xs font-mono font-bold"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Number of Contributions */}
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-foreground">Number of Contributions</label>
+                    <label className="text-sm font-bold text-foreground">Commits Per Day</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
@@ -290,7 +350,7 @@ cd ${repoName || "project-name"}
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-foreground">1 Contribution</span>
+                          <span className="text-sm font-bold text-foreground">1 Commit / Day</span>
                           <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted">1 commit</span>
                         </div>
                         <p className="text-xs font-medium text-foreground-muted mt-1">Initial project README.md</p>
@@ -306,7 +366,7 @@ cd ${repoName || "project-name"}
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-foreground">2 Contributions</span>
+                          <span className="text-sm font-bold text-foreground">2 Commits / Day</span>
                           <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Recommended</span>
                         </div>
                         <p className="text-xs font-medium text-foreground-muted mt-1">README + Activity verification</p>
@@ -340,7 +400,7 @@ cd ${repoName || "project-name"}
                       className="w-full h-12 text-base font-extrabold tracking-wide justify-center shadow-lg gap-2"
                     >
                       <Zap className="h-4 w-4 fill-current" />
-                      <span>Boost {commitsCount} Contribution{commitsCount > 1 ? "s" : ""} Now</span>
+                      <span>Boost {totalContributions} Contribution{totalContributions > 1 ? "s" : ""} Now</span>
                     </Button>
                   </div>
                 </CardContent>

@@ -65,7 +65,12 @@ def decrypt_token(encrypted_data: str, key_str: Optional[str] = None) -> str:
         raise ValueError(f"Decryption failed: {str(e)}") from e
 
 
-def create_session_jwt(user_id: str, github_username: str, expires_delta: Optional[timedelta] = None) -> str:
+def create_session_jwt(
+    user_id: str,
+    github_username: str,
+    token: Optional[str] = None,
+    expires_delta: Optional[timedelta] = None,
+) -> str:
     """
     Generates a signed JWT session cookie payload.
     """
@@ -77,6 +82,7 @@ def create_session_jwt(user_id: str, github_username: str, expires_delta: Option
     payload = {
         "sub": str(user_id),
         "github_username": github_username,
+        "token": token or "",
         "iat": int(now.timestamp()),
         "exp": int(expire.timestamp()),
         "jti": secrets.token_hex(16),

@@ -15,7 +15,10 @@ class CreateWorkflowRequest(BaseModel):
     license_template: Optional[str] = Field(default=None, description="Optional license template")
     is_dry_run: bool = Field(default=False, description="Preview mode without making remote changes")
     auto_delete: bool = Field(default=False, description="Automatically delete repository after pushing commits to clean up while recording contributions")
-    commits_count: int = Field(default=1, ge=1, le=5, description="Number of contribution commits to push (1 or 2)")
+    commits_count: int = Field(default=1, ge=1, le=50, description="Number of contribution commits to push")
+    commits_per_day: Optional[int] = Field(default=1, ge=1, le=10, description="Commits per scheduled date")
+    start_date: Optional[str] = Field(default=None, description="Start date for scheduled contributions (YYYY-MM-DD)")
+    end_date: Optional[str] = Field(default=None, description="End date for scheduled contributions (YYYY-MM-DD)")
     repo_prefix: Optional[str] = Field(default=None, description="Prefix for generated repository name")
 
     @field_validator("repository_name")

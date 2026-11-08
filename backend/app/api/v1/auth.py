@@ -139,8 +139,8 @@ async def github_callback(
             enforce_allowlist=True,
         )
 
-        # 4. Generate Session JWT
-        session_jwt = create_session_jwt(user.id, user.github_username)
+        # 4. Generate Session JWT with user ID, real GitHub username, and token
+        session_jwt = create_session_jwt(user.id, user.github_username, access_token)
 
         # 5. Log audit event
         client_ip = request.client.host if request.client else None
@@ -259,7 +259,7 @@ async def login_with_github_token(
     )
 
     # Generate Session JWT
-    session_jwt = create_session_jwt(user.id, user.github_username)
+    session_jwt = create_session_jwt(user.id, user.github_username, token)
 
     # Audit log event
     client_ip = request.client.host if request.client else None

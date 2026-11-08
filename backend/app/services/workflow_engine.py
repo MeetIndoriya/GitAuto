@@ -289,7 +289,24 @@ class WorkflowEngine:
         owner_name = user.github_username
         repo_name = req.repository_name
         try:
-            # 1. Push README.md
+            from datetime import timedelta
+            # Parse scheduled dates if specified
+            scheduled_dates = []
+            if req.start_date and req.end_date:
+                try:
+                    s_dt = datetime.strptime(req.start_date, "%Y-%m-%d").date()
+                    e_dt = datetime.strptime(req.end_date, "%Y-%m-%d").date()
+                    curr_dt = s_dt
+                    while curr_dt <= e_dt and len(scheduled_dates) < 60:
+                        scheduled_dates.append(curr_dt.isoformat())
+                        curr_dt += timedelta(days=1)
+                except Exception:
+                    pass
+
+            if not scheduled_dates:
+                scheduled_dates = [utc_now().date().isoformat()]
+
+            # 1. Push README.md (Primary contribution)
             if req.init_readme:
                 await github_client.put_file_content(
                     token=token,
@@ -313,6 +330,18 @@ class WorkflowEngine:
                     branch=req.default_branch,
                 )
 
+            # 3. Push scheduled dates contribution commits if multiple dates
+            for d in scheduled_dates[1:]:
+                await github_client.put_file_content(
+                    token=token,
+                    owner=owner_name,
+                    repo=repo_name,
+                    path=f"activity-{d}.md",
+                    content=f"# Activity Proof - {d}\n\nAutomated contribution verified by GitAuto.\n",
+                    commit_message=f"chore: verified contribution for {d} [GitAuto]",
+                    branch=req.default_branch,
+                )
+
             s5_dur = int((time.perf_counter() - s5_start) * 1000)
             await self.update_step(
                 session,
@@ -324,8 +353,8 @@ class WorkflowEngine:
                 duration_ms=s5_dur,
             )
 
-            # Push secondary contribution commit if requested (2 contributions total)
-            if req.commits_count >= 2:
+            # Push secondary contribution commit if requested (2 contributions per day or total >= 2)
+            if (req.commits_count >= 2 or (req.commits_per_day and req.commits_per_day >= 2)):
                 s5b_start = time.perf_counter()
                 s5b = await self.create_workflow_step(
                     session, workflow_run.id, 6, "Publish Secondary Contribution Commit [2nd Contribution]", "IN_PROGRESS"

@@ -104,6 +104,9 @@ export interface CreateWorkflowRequest {
   is_dry_run: boolean;
   auto_delete?: boolean;
   commits_count?: number;
+  commits_per_day?: number;
+  start_date?: string;
+  end_date?: string;
   repo_prefix?: string;
 }
 

@@ -90,12 +90,16 @@ export async function GET(request: NextRequest) {
       github_username: userProfile.login,
       avatar_url: userProfile.avatar_url,
       token: accessToken,
+      email: userProfile.email || `${userProfile.login}@users.noreply.github.com`,
     };
+
+    const host = request.headers.get("host") || "";
+    const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
 
     const response = NextResponse.redirect(new URL("/dashboard", request.url));
     response.cookies.set("gitauto_session", JSON.stringify(sessionPayload), {
       httpOnly: false,
-      secure: true,
+      secure: !isLocal,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 14,
       path: "/",

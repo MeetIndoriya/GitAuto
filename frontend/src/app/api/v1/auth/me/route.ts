@@ -37,10 +37,19 @@ export async function GET(request: NextRequest) {
       if (parts.length === 3) {
         const payload = Buffer.from(parts[1], "base64").toString("utf-8");
         const jwtData = JSON.parse(payload);
+        const username = jwtData.github_username || jwtData.username || jwtData.login;
+        if (!username) {
+          return NextResponse.json(
+            { success: false, error: { code: "UNAUTHORIZED", message: "Invalid session token" } },
+            { status: 401 }
+          );
+        }
         session = {
-          user_id: jwtData.sub || "123456",
-          github_username: jwtData.username || "MeetIndoriya",
-          avatar_url: `https://avatars.githubusercontent.com/u/${jwtData.sub || 123456}?v=4`,
+          user_id: String(jwtData.sub || jwtData.user_id || "123456"),
+          github_username: username,
+          avatar_url: jwtData.avatar_url || `https://avatars.githubusercontent.com/${username}`,
+          token: jwtData.token || "",
+          email: jwtData.email || `${username}@users.noreply.github.com`,
         };
       }
     }
@@ -58,7 +67,7 @@ export async function GET(request: NextRequest) {
         id: session.user_id || "1",
         github_user_id: Number(session.user_id) || 123456,
         github_username: session.github_username,
-        avatar_url: session.avatar_url || `https://avatars.githubusercontent.com/u/123456?v=4`,
+        avatar_url: session.avatar_url || (session.github_username ? `https://avatars.githubusercontent.com/${session.github_username}` : null),
         email: session.email || `${session.github_username}@users.noreply.github.com`,
         created_at: new Date().toISOString(),
       },
