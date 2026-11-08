@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { upsertUserOnLogin } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -17,14 +18,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=missing_code", request.url));
   }
 
-  // If OAuth was initiated on local machine, forward back to localhost backend
-  if (state && state.startsWith("local_")) {
-    return NextResponse.redirect(
-      `http://localhost:8000/api/v1/auth/github/callback?code=${code}&state=${state}`
-    );
-  }
-
-  // Otherwise, handle OAuth directly on Vercel
   const clientId = process.env.GITHUB_CLIENT_ID || "Ov23liqMpIvxYOHYvCch";
   const clientSecret = process.env.GITHUB_CLIENT_SECRET || "d92682c859a8e0596927d581fa5c111b2cc47349";
   const redirectUri = process.env.GITHUB_REDIRECT_URI || "https://github--auto.vercel.app/login/api/v1/auth/github/callback";
@@ -68,7 +61,6 @@ export async function GET(request: NextRequest) {
     const userProfile = await userRes.json();
 
     // Commercial Multi-Tenant Mode: Every GitHub user is permitted
-    // Optional allowlist only active if explicitly set to something other than "*" and not empty
     const allowlistEnv = process.env.AUTHORIZED_GITHUB_USER;
     if (allowlistEnv && allowlistEnv.trim() !== "" && allowlistEnv.trim() !== "*") {
       const authorized = allowlistEnv.split(",").map((u) => u.trim().toLowerCase());
@@ -76,12 +68,25 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(
           new URL(
             `/login?error=unauthorized_account&description=${encodeURIComponent(
-              `Account @${userProfile.login} is not authorized on this private instance.`
+              `Account @${userProfile.login} is not authorized on this instance.`
             )}`,
             request.url
           )
         );
       }
+    }
+
+    // Auto-save user to Supabase PostgreSQL database
+    try {
+      await upsertUserOnLogin({
+        github_user_id: userProfile.id,
+        github_username: userProfile.login,
+        avatar_url: userProfile.avatar_url,
+        email: userProfile.email || undefined,
+        access_token: accessToken,
+      });
+    } catch (dbErr) {
+      console.error("Database sync error (non-fatal):", dbErr);
     }
 
     // Session cookie payload
@@ -92,6 +97,13 @@ export async function GET(request: NextRequest) {
       token: accessToken,
       email: userProfile.email || `${userProfile.login}@users.noreply.github.com`,
     };
+
+    const isLocalOAuth = state && state.startsWith("local_");
+    if (isLocalOAuth) {
+      return NextResponse.redirect(
+        `http://localhost:3000/login?session=${encodeURIComponent(JSON.stringify(sessionPayload))}`
+      );
+    }
 
     const host = request.headers.get("host") || "";
     const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
@@ -112,4 +124,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

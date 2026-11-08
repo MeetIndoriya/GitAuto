@@ -18,10 +18,17 @@ function LoginContent() {
   const descriptionParam = searchParams.get("description") || searchParams.get("message");
 
   useEffect(() => {
+    const sessionParam = searchParams.get("session");
+    if (sessionParam) {
+      document.cookie = `gitauto_session=${encodeURIComponent(sessionParam)}; path=/; max-age=1209600; SameSite=Lax`;
+      window.location.href = "/dashboard";
+      return;
+    }
+
     if (!isLoading && user) {
       router.replace("/dashboard");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, searchParams]);
 
   const handleGitHubLogin = () => {
     setIsAuthorizing(true);

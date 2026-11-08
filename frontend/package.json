@@ -9,10 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/pg": "^8.23.1",
     "animejs": "^3.2.2",
     "clsx": "^2.1.1",
     "lucide-react": "^1.70.0",
     "next": "^16.4.5",
+    "pg": "^8.23.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.5.4"

@@ -14,25 +14,17 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${backendUrl}/api/v1/:path*`,
-      },
-      {
-        source: "/login/api/v1/:path*",
-        destination: `${backendUrl}/api/v1/:path*`,
-      },
-      {
-        source: "/health",
-        destination: `${backendUrl}/health`,
-      },
-      {
-        source: "/ready",
-        destination: `${backendUrl}/ready`,
-      },
-    ];
+    // Only proxy to an external backend if BACKEND_URL is explicitly configured and not localhost
+    const backendUrl = process.env.BACKEND_URL;
+    if (backendUrl && backendUrl !== "http://localhost:8000" && process.env.USE_BACKEND_PROXY === "true") {
+      return [
+        {
+          source: "/backend-api/:path*",
+          destination: `${backendUrl}/api/v1/:path*`,
+        },
+      ];
+    }
+    return [];
   },
 };
 
