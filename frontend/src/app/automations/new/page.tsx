@@ -243,8 +243,8 @@ cd ${repoName || "project-name"}
                 : "text-foreground-muted hover:text-foreground"
             }`}
           >
-            <Zap className="h-4 w-4" />
-            <span>1-Click Contribution Boost</span>
+            <Calendar className="h-4 w-4" />
+            <span>Scheduled Contribution Booster</span>
           </button>
           <button
             type="button"
@@ -399,8 +399,8 @@ cd ${repoName || "project-name"}
                       disabled={isExecuting}
                       className="w-full h-12 text-base font-extrabold tracking-wide justify-center shadow-lg gap-2"
                     >
-                      <Zap className="h-4 w-4 fill-current" />
-                      <span>Boost {totalContributions} Contribution{totalContributions > 1 ? "s" : ""} Now</span>
+                      <Calendar className="h-4 w-4" />
+                      <span>Execute Scheduled Contribution Boost ({totalContributions} Commits)</span>
                     </Button>
                   </div>
                 </CardContent>

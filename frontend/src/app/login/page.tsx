@@ -71,7 +71,7 @@ function LoginContent() {
                 <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
                   <Check className="h-3 w-3 stroke-[3]" />
                 </div>
-                <span>Create & setup repositories in 1-click</span>
+                <span>Fast repository provisioning & setup</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import NextLink from "next/link";
 import {
   Settings,
@@ -9,13 +9,9 @@ import {
   Moon,
   Laptop,
   Check,
-  ShieldCheck,
   User,
   LogOut,
-  Infinity as InfinityIcon,
-  Sparkles,
   Sliders,
-  Monitor,
   Zap,
   ArrowRight,
 } from "lucide-react";
@@ -27,12 +23,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/ToastProvider";
 
 export default function SettingsPage() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme, highContrast, setHighContrast } = useTheme();
   const { user, logout } = useAuth();
   const toast = useToast();
-
-  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
-  const [highContrast, setHighContrast] = useState(false);
 
   const handleThemeChange = (newTheme: "dark" | "light" | "system") => {
     setTheme(newTheme);
@@ -171,50 +164,15 @@ export default function SettingsPage() {
                 <span>Display & Layout Preferences</span>
               </CardTitle>
               <CardDescription className="text-xs font-semibold">
-                Customize data density and accessibility controls
+                Accessibility and visual contrast controls
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/60">
                 <div className="space-y-0.5">
-                  <span className="text-sm font-bold text-foreground">Table Data Density</span>
+                  <span className="text-sm font-bold text-foreground">High Contrast Borders</span>
                   <p className="text-xs font-medium text-foreground-muted">
-                    Switch between comfortable row spacing and dense compact audit rows.
-                  </p>
-                </div>
-                <div className="flex rounded-lg border border-border p-1 bg-muted/40 text-xs font-bold">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDensity("comfortable");
-                      toast.info("Density Set", "Comfortable spacing enabled.");
-                    }}
-                    className={`px-3 py-1.5 rounded-md transition-all ${
-                      density === "comfortable" ? "bg-background text-foreground shadow-xs" : "text-foreground-muted hover:text-foreground"
-                    }`}
-                  >
-                    Comfortable
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDensity("compact");
-                      toast.info("Density Set", "Compact spacing enabled.");
-                    }}
-                    className={`px-3 py-1.5 rounded-md transition-all ${
-                      density === "compact" ? "bg-background text-foreground shadow-xs" : "text-foreground-muted hover:text-foreground"
-                    }`}
-                  >
-                    Compact
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/60">
-                <div className="space-y-0.5">
-                  <span className="text-sm font-bold text-foreground">High Contrast Focus Borders</span>
-                  <p className="text-xs font-medium text-foreground-muted">
-                    Enhance border thickness and focus outlines across input fields and cards.
+                    Enhance border thickness and contrast outlines across all cards, inputs, and components.
                   </p>
                 </div>
                 <button
@@ -222,11 +180,11 @@ export default function SettingsPage() {
                   onClick={() => {
                     const next = !highContrast;
                     setHighContrast(next);
-                    toast.info("High Contrast", next ? "High contrast outlines enabled." : "Standard contrast restored.");
+                    toast.info("High Contrast", next ? "High contrast borders enabled." : "Standard contrast restored.");
                   }}
                   className={`px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all ${
                     highContrast
-                      ? "border-primary bg-primary text-primary-foreground font-extrabold"
+                      ? "border-primary bg-primary text-primary-foreground font-extrabold shadow-sm"
                       : "border-border bg-muted/40 text-foreground-muted hover:text-foreground"
                   }`}
                 >
@@ -236,47 +194,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* 3. Perpetual Automation Engine Status */}
-          <Card>
-            <CardHeader className="pb-4 border-b border-border bg-muted/10">
-              <CardTitle className="text-base font-extrabold flex items-center gap-2">
-                <InfinityIcon className="h-5 w-5 text-emerald-400" />
-                <span>Continuous Automation Daemon</span>
-              </CardTitle>
-              <CardDescription className="text-xs font-semibold">
-                Perpetual background execution and monitoring for your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-emerald-400 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Perpetual Daemon Engine: ACTIVE</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
-                    RUNNING FOREVER
-                  </span>
-                </div>
-                <p className="text-xs font-medium text-foreground-muted leading-relaxed">
-                  Every automation workflow initiated for your account runs indefinitely in the background daemon. The engine continuously syncs commits, monitors remote health, and preserves repository integrity without termination.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono font-semibold">
-                <div className="p-3 rounded-lg border border-border bg-muted/20 flex justify-between items-center">
-                  <span className="text-foreground-muted">Daemon Mode:</span>
-                  <span className="text-foreground font-bold">Continuous Loop</span>
-                </div>
-                <div className="p-3 rounded-lg border border-border bg-muted/20 flex justify-between items-center">
-                  <span className="text-foreground-muted">Drift Protection:</span>
-                  <span className="text-emerald-400 font-bold">Enabled</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 4. Account & Active Session */}
+          {/* 3. Account & Active Session */}
           <Card>
             <CardHeader className="pb-4 border-b border-border bg-muted/10">
               <CardTitle className="text-base font-extrabold flex items-center gap-2">

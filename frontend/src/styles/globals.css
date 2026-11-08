@@ -75,6 +75,43 @@
     --input: 240 6% 18%;
     --ring: 240 5% 90%;
   }
+
+  :root.high-contrast {
+    --border: 240 10% 25%;
+    --border-subtle: 240 10% 35%;
+    --border-focus: 0 0% 0%;
+    --input: 240 10% 25%;
+    --ring: 0 0% 0%;
+  }
+
+  :root.dark.high-contrast {
+    --border: 240 5% 65%;
+    --border-subtle: 240 5% 50%;
+    --border-focus: 0 0% 100%;
+    --input: 240 5% 60%;
+    --ring: 0 0% 100%;
+  }
+}
+
+.high-contrast .border,
+.high-contrast [class*="border-border"],
+.high-contrast [class*="border-"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+.high-contrast [class*="rounded-"],
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  box-shadow: 0 0 0 1px hsl(var(--border));
+}
+
+.high-contrast input:focus,
+.high-contrast textarea:focus,
+.high-contrast select:focus,
+.high-contrast button:focus-visible {
+  outline: 2px solid hsl(var(--border-focus)) !important;
+  outline-offset: 1px;
 }
 
 @layer base {
