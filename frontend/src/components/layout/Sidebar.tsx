@@ -100,10 +100,10 @@ export function Sidebar({ className, onClose }: { className?: string; onClose?: 
           )}
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-bold text-foreground truncate">
-              @{user?.github_username || "octocat"}
+              @{user?.github_username || "user"}
             </span>
             <span className="text-xs text-foreground-muted font-mono font-medium truncate">
-              Single-User Node
+              Connected Account
             </span>
           </div>
         </div>

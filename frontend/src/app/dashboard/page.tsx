@@ -111,7 +111,7 @@ export default function DashboardPage() {
           <div className="space-y-1">
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
               <span>Welcome back,</span>
-              <span className="text-foreground font-mono font-bold">@{user?.github_username || "octocat"}</span>
+              <span className="text-foreground font-mono font-bold">@{user?.github_username || "user"}</span>
             </h1>
             <p className="text-sm font-medium text-foreground-muted">
               GitHub repository lifecycle management & audit overview.

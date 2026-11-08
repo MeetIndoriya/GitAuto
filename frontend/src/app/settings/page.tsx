@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import NextLink from "next/link";
 import {
   Settings,
   Palette,
@@ -15,7 +16,8 @@ import {
   Sparkles,
   Sliders,
   Monitor,
-  KeyRound,
+  Zap,
+  ArrowRight,
 } from "lucide-react";
 import { ShellLayout } from "@/components/layout/ShellLayout";
 import { Button } from "@/components/ui/Button";
@@ -279,10 +281,10 @@ export default function SettingsPage() {
             <CardHeader className="pb-4 border-b border-border bg-muted/10">
               <CardTitle className="text-base font-extrabold flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
-                <span>Account & Session Security</span>
+                <span>Connected GitHub Account</span>
               </CardTitle>
               <CardDescription className="text-xs font-semibold">
-                Authenticated GitHub profile and cryptographic session tokens
+                Your authenticated GitHub profile for direct automation execution
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
@@ -301,7 +303,7 @@ export default function SettingsPage() {
                   )}
                   <div>
                     <h4 className="text-base font-bold text-foreground">
-                      @{user?.github_username || "octocat"}
+                      @{user?.github_username || "user"}
                     </h4>
                     <p className="text-xs font-mono font-medium text-foreground-muted">
                       GitHub ID: {user?.github_user_id || "123456"}
@@ -320,9 +322,17 @@ export default function SettingsPage() {
                 </Button>
               </div>
 
-              <div className="p-3 rounded-xl border border-border bg-muted/20 flex items-center gap-2 text-xs font-medium text-foreground-muted">
-                <KeyRound className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>Authenticated via GitHub Personal Access Token. Session encrypted with AES-256-GCM.</span>
+              <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 text-xs font-semibold text-foreground">
+                  <Zap className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>Automations run directly on your connected GitHub account.</span>
+                </div>
+                <NextLink href="/automations/new">
+                  <Button variant="primary" size="sm" className="h-9 text-xs font-bold gap-1.5 shadow-sm">
+                    <span>Set Automation on GitHub</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </NextLink>
               </div>
             </CardContent>
           </Card>
