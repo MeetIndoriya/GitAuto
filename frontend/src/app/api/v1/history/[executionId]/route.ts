@@ -3,15 +3,16 @@ import { executionHistory } from "@/lib/server-store";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { executionId: string } }
+  { params }: { params: Promise<{ executionId: string }> }
 ) {
-  const item = executionHistory.find((e) => e.id === params.executionId);
+  const { executionId } = await params;
+  const item = executionHistory.find((e) => e.id === executionId);
   if (!item) {
     return NextResponse.json(
       {
         success: true,
         data: {
-          id: params.executionId,
+          id: executionId,
           workflow_name: "Repository Lifecycle Execution",
           operation_type: "CREATE_REPOSITORY",
           repository_name: "managed-repo",

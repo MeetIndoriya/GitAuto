@@ -3,8 +3,9 @@ import { getSessionFromRequest } from "@/lib/server-auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { repoId: string } }
+  { params }: { params: Promise<{ repoId: string }> }
 ) {
+  const { repoId } = await params;
   const session = getSessionFromRequest(request);
   if (!session || !session.token) {
     return NextResponse.json({ success: false, error: { message: "Unauthorized" } }, { status: 401 });
@@ -44,7 +45,7 @@ export async function POST(
         workflow_name: "Safe Delete Repository",
         operation_type: "DELETE_REPOSITORY",
         repository_name: repoName,
-        target_repository_id: params.repoId,
+        target_repository_id: repoId,
         status: "SUCCESS",
         is_dry_run: false,
         started_at: new Date().toISOString(),
